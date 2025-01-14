@@ -8,6 +8,7 @@ const int MAX_MAP_COLS = 15;
 
 struct Game {
 	char map[MAX_MAP_ROWS * MAX_MAP_COLS];
+	int lives;
 	int player_x;
 	int player_y;
 };
@@ -20,9 +21,9 @@ bool load_map (Game *game, const char *filepath) {
 
 	for (int row = 0; row < MAX_MAP_ROWS; row++) {
 		for (int col = 0; col < MAX_MAP_COLS; col++) {
-			char c = file.get();
-			game->map[row * MAX_MAP_COLS + col] = c;
-			if (c == '@') {
+			char tile = file.get();
+			game->map[row * MAX_MAP_COLS + col] = tile;
+			if (tile == '@') {
 				game->player_x = col;
 				game->player_y = row;
 			}
@@ -37,6 +38,14 @@ bool load_map (Game *game, const char *filepath) {
 	return true;
 }
 
+void print_lives(int lives) {
+	cout << "Lives: ";
+	for (int i = 0; i < lives; i++) {
+		cout << '*';
+	}
+	cout << endl;
+}
+
 void print_map(Game *game) {
 	for (int row = 0; row < MAX_MAP_ROWS; row++) {
 		for (int col = 0; col < MAX_MAP_COLS; col++) {
@@ -44,12 +53,12 @@ void print_map(Game *game) {
 				cout << '@';
 			}
 			else {
-				char c = game->map[row * MAX_MAP_COLS + col];
-				if (c == '@') {
+				char tile = game->map[row * MAX_MAP_COLS + col];
+				if (tile == '@') {
 					cout << ' ';
 				}
 				else {
-					cout << c;
+					cout << tile;
 				}
 			}
 		}
@@ -61,28 +70,49 @@ void move_player(Game *game) {
 	char input;
 	cin >> input;
 
-	if (input == 'a' && game->player_x > 0) {
-		game->player_x--;
+	int new_x = game->player_x;
+	int new_y = game->player_y;
+
+	if (input == 'a' && new_x > 0) {
+		new_x--;
 	}
-	else if (input == 'd' && game->player_x < MAX_MAP_COLS - 1) {
-		game->player_x++;
+	else if (input == 'd' && new_x < MAX_MAP_COLS - 1) {
+		new_x++;
 	}
-	else if (input == 'w' && game->player_y > 0) {
-		game->player_y--;
+	else if (input == 'w' && new_y > 0) {
+		new_y--;
 	}
-	else if (input == 's' && game->player_y < MAX_MAP_ROWS - 1) {
-		game->player_y++;
+	else if (input == 's' && new_y < MAX_MAP_ROWS - 1) {
+		new_y++;
 	}
+
+	char tile = game->map[new_y * MAX_MAP_COLS + new_x];
+	if (tile == '#') {
+		game->lives--;
+		new_x = game->player_x;
+		new_y = game->player_y;
+	}
+
+	game->player_x = new_x;
+	game->player_y = new_y;
 }
 
 int main () {
 	Game game = {};
+	game.lives = 3;
+
 	if (!load_map(&game, "map1.txt"))
 	  return -1;
 
 	while (true) {
+		print_lives(game.lives);
 		print_map(&game);
 		move_player(&game);
+
+		if (game.lives <= 0) {
+			cout << "Game Over!" << endl;
+			break;
+		}
 	}
 
 	return 0;
