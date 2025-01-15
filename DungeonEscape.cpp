@@ -9,6 +9,7 @@ const int MAX_MAP_COLS = 15;
 struct Game {
 	char map[MAX_MAP_ROWS * MAX_MAP_COLS];
 	int lives;
+	int coins;
 	int player_x;
 	int player_y;
 };
@@ -44,6 +45,10 @@ void print_lives(int lives) {
 		cout << '*';
 	}
 	cout << endl;
+}
+
+void print_coins(int coins) {
+	cout << "Coins: " << coins << endl;
 }
 
 void print_map(Game *game) {
@@ -92,6 +97,10 @@ void move_player(Game *game) {
 		new_x = game->player_x;
 		new_y = game->player_y;
 	}
+	else if (tile == 'C') {
+		game->coins++;
+		game->map[new_y * MAX_MAP_COLS + new_x] = ' ';
+	}
 
 	game->player_x = new_x;
 	game->player_y = new_y;
@@ -106,13 +115,15 @@ int main () {
 
 	while (true) {
 		print_lives(game.lives);
+		print_coins(game.coins);
 		print_map(&game);
-		move_player(&game);
 
 		if (game.lives <= 0) {
 			cout << "Game Over!" << endl;
 			break;
 		}
+
+		move_player(&game);
 	}
 
 	return 0;
