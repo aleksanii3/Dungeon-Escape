@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <windows.h>
 
 using namespace std;
 
@@ -114,6 +115,7 @@ int main () {
 	  return -1;
 
 	while (true) {
+		system("cls");
 		print_lives(game.lives);
 		print_coins(game.coins);
 		print_map(&game);
