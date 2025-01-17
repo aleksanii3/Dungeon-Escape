@@ -82,6 +82,37 @@ void print_map(Game *game) {
 	}
 }
 
+void find_next_portal(const Game *game, int new_x, int new_y, int& portal_x, int& portal_y) {
+	int first_portal_x = -1;
+	int first_portal_y = -1;
+	bool after_first_portal = true;
+	bool after_current_portal = false;
+
+	for (int row = 0; row < MAX_MAP_ROWS; row++) {
+		for (int col = 0; col < MAX_MAP_COLS; col++) {
+			if (game->map[row * MAX_MAP_COLS + col] == '%') {
+				if (after_first_portal) {
+					after_first_portal = false;
+					first_portal_x = col;
+					first_portal_y = row;
+				}
+
+				if (col == new_x && row == new_y) {
+					after_current_portal = true;
+				}
+				else if (after_current_portal) {
+					portal_x = col;
+					portal_y = row;
+					return;
+				}
+			}
+		}
+	}
+
+	portal_x = first_portal_x;
+	portal_y = first_portal_y;
+}
+
 void move_player(Game *game) {
 	char input;
 	cin >> input;
@@ -115,6 +146,12 @@ void move_player(Game *game) {
 	else if (tile == '&') {
 		game->has_key = true;
 		game->map[new_y * MAX_MAP_COLS + new_x] = ' ';
+	}
+	else if (tile == '%') {
+		int portal_x, portal_y;
+		find_next_portal(game, new_x, new_y, portal_x, portal_y);
+		new_x = portal_x;
+		new_y = portal_y;
 	}
 
 	game->player_x = new_x;
