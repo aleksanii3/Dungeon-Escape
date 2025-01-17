@@ -13,6 +13,7 @@ struct Game {
 	int coins;
 	int player_x;
 	int player_y;
+	int has_key;
 };
 
 bool load_map (Game *game, const char *filepath) {
@@ -48,6 +49,15 @@ void print_lives(int lives) {
 	cout << endl;
 }
 
+void print_key(bool has_key) {
+	if (has_key) {
+		cout << "Key found" << endl;
+	}
+	else {
+		cout << "Key not found" << endl;
+	}
+}
+
 void print_coins(int coins) {
 	cout << "Coins: " << coins << endl;
 }
@@ -79,16 +89,16 @@ void move_player(Game *game) {
 	int new_x = game->player_x;
 	int new_y = game->player_y;
 
-	if (input == 'a' && new_x > 0) {
+	if ((input == 'a' || input == 'A') && new_x > 0) {
 		new_x--;
 	}
-	else if (input == 'd' && new_x < MAX_MAP_COLS - 1) {
+	else if ((input == 'd' || input == 'D') && new_x < MAX_MAP_COLS - 1) {
 		new_x++;
 	}
-	else if (input == 'w' && new_y > 0) {
+	else if ((input == 'w' || input == 'W') && new_y > 0) {
 		new_y--;
 	}
-	else if (input == 's' && new_y < MAX_MAP_ROWS - 1) {
+	else if ((input == 's' || input == 'S') && new_y < MAX_MAP_ROWS - 1) {
 		new_y++;
 	}
 
@@ -100,6 +110,10 @@ void move_player(Game *game) {
 	}
 	else if (tile == 'C') {
 		game->coins++;
+		game->map[new_y * MAX_MAP_COLS + new_x] = ' ';
+	}
+	else if (tile == '&') {
+		game->has_key = true;
 		game->map[new_y * MAX_MAP_COLS + new_x] = ' ';
 	}
 
@@ -118,6 +132,7 @@ int main () {
 		system("cls");
 		print_lives(game.lives);
 		print_coins(game.coins);
+		print_key(game.has_key);
 		print_map(&game);
 
 		if (game.lives <= 0) {
