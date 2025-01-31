@@ -6,8 +6,10 @@ using namespace std;
 
 const int MAX_MAP_ROWS = 10;
 const int MAX_MAP_COLS = 15;
+const int MAX_NAME = 50;
 
 struct Game {
+	char name[MAX_NAME + 1];
 	char map[MAX_MAP_ROWS * MAX_MAP_COLS];
 	int lives;
 	int coins;
@@ -15,6 +17,54 @@ struct Game {
 	int player_y;
 	int has_key;
 };
+
+bool compare_strings (const char *a, const char *b) {
+	int i = 0;
+	while (true) {
+		if (a[i] != b[i]) {
+			return false;
+		}
+		if (a[i] == '\0') {
+			return true;
+		}
+		i++;
+	}
+}
+
+bool save_game(const Game *game) {
+	cout << "Saving..." << endl;
+	ofstream file("players.txt", std::ios::binary);
+	if (!file.is_open()) {
+		return false;
+	}
+
+	file.write((const char *) game, sizeof(*game));
+	file.close();
+	return true;
+}
+
+bool load_game(Game *game) {
+	ifstream file("players.txt", std::ios::binary);
+	if (!file.is_open()) {
+		return false;
+	}
+
+	bool loaded = false;
+	Game loaded_game;
+	while (!file.eof()) {
+
+file.read
+((char *) &loaded_game, sizeof(loaded_game));
+		if (compare_strings(loaded_game.name, game->name)) {
+			loaded = true;
+			*game = loaded_game;
+			break;
+		}
+	}
+
+	file.close();
+	return loaded;
+}
 
 bool load_map (Game *game, const char *filepath) {
 	ifstream file(filepath);
@@ -39,6 +89,65 @@ bool load_map (Game *game, const char *filepath) {
 
 	file.close();
 	return true;
+}
+
+void input_name(Game *game) {
+	cin.clear();
+	cin.ignore(10000, '\n');
+	cout << "Player name:" << endl;
+	while (true) {
+		cout << "> ";
+		cin.getline(game->name, MAX_NAME + 1);
+		break;
+	}
+}
+
+bool show_menu(Game *game) {
+	cout << "1. New Player" << endl;
+	cout << "2. Load Player" << endl;
+
+	int success = false;
+
+	while (true) {
+		int choice;
+		cout << "> ";
+		cin >> choice;
+		if (
+cin.fail
+()) {
+			cin.clear();
+			cin.ignore(10000, '\n');
+		}
+		else if (choice == 1) {
+			input_name(game);
+			if (load_game(game)) {
+				cout << "Player name already exists!" << endl;
+				success = false;
+				break;
+			}
+			else {
+				cout << "Welcome, " << game->name << "!" << endl;
+				success = true;
+				break;
+			}
+			break;
+		}
+		else if (choice == 2) {
+			input_name(game);
+			if (load_game(game)) {
+				cout << "Game loaded!" << endl;
+				success = true;
+				break;
+			}
+			else {
+				cout << "Player not found!" << endl;
+				success = false;
+				break;
+			}
+		}
+	}
+
+	return success;
 }
 
 void print_lives(int lives) {
@@ -161,6 +270,10 @@ void move_player(Game *game) {
 int main () {
 	Game game = {};
 	game.lives = 3;
+
+	if (!show_menu(&game)) {
+		return -1;
+	}
 
 	if (!load_map(&game, "map1.txt"))
 	  return -1;
