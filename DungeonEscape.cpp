@@ -8,9 +8,17 @@ const int MAX_MAP_ROWS = 10;
 const int MAX_MAP_COLS = 15;
 const int MAX_NAME = 50;
 
+const char *MAPS[] = {
+	"map1.txt",
+	"map2.txt",
+	"map3.txt",
+};
+const int MAPS_COUNT = 3;
+
 struct Game {
 	char name[MAX_NAME + 1];
 	char map[MAX_MAP_ROWS * MAX_MAP_COLS];
+	int level;
 	int lives;
 	int coins;
 	int player_x;
@@ -66,7 +74,13 @@ file.read
 	return loaded;
 }
 
-bool load_map (Game *game, const char *filepath) {
+bool load_map (Game *game) {
+	if (game->level >= MAPS_COUNT) {
+		return false;
+	}
+
+	const char *filepath = MAPS[game->level];
+
 	ifstream file(filepath);
 	if (!file.is_open()) {
 		return false;
@@ -150,6 +164,10 @@ cin.fail
 	return success;
 }
 
+void print_level(int level) {
+	cout << "Level: " << level + 1 << endl;
+}
+
 void print_lives(int lives) {
 	cout << "Lives: ";
 	for (int i = 0; i < lives; i++) {
@@ -169,6 +187,10 @@ void print_key(bool has_key) {
 
 void print_coins(int coins) {
 	cout << "Coins: " << coins << endl;
+}
+
+void print_message(const char *message) {
+	cout << message << endl;
 }
 
 void print_map(Game *game) {
@@ -222,7 +244,9 @@ void find_next_portal(const Game *game, int new_x, int new_y, int& portal_x, int
 	portal_y = first_portal_y;
 }
 
-void move_player(Game *game) {
+void move_player(Game *game, bool &finished, const char *&message) {
+	message = "";
+
 	char input;
 	cin >> input;
 
@@ -245,6 +269,12 @@ void move_player(Game *game) {
 	char tile = game->map[new_y * MAX_MAP_COLS + new_x];
 	if (tile == '#') {
 		game->lives--;
+		if (game->lives == 0) {
+			cout << "You are dead!" << endl;
+			game->has_key = false;
+			finished = true;
+			save_game(game);
+		}
 		new_x = game->player_x;
 		new_y = game->player_y;
 	}
@@ -255,6 +285,25 @@ void move_player(Game *game) {
 	else if (tile == '&') {
 		game->has_key = true;
 		game->map[new_y * MAX_MAP_COLS + new_x] = ' ';
+	}
+	else if (tile == 'X') {
+		if (game->has_key) {
+			game->has_key = false;
+			game->level++;
+			if (game->level >= MAPS_COUNT) {
+				cout << "You win!" << endl;
+				finished = true;
+			}
+			else {
+				save_game(game);
+				load_map(game);
+				new_x = game->player_x;
+				new_y = game->player_y;
+			}
+		}
+		else {
+			message = "You must find the key first.";
+		}
 	}
 	else if (tile == '%') {
 		int portal_x, portal_y;
@@ -275,22 +324,27 @@ int main () {
 		return -1;
 	}
 
-	if (!load_map(&game, "map1.txt"))
-	  return -1;
+	if (game.lives == 0) {
+		cout << "This player is dead!" << endl;
+		return 0;
+	}
 
-	while (true) {
+	if (!load_map(&game)) {
+		return -1;
+	}
+
+	bool finished = false;
+	const char *message = "";
+
+	while (!finished) {
 		system("cls");
+		print_level(game.level);
 		print_lives(game.lives);
 		print_coins(game.coins);
 		print_key(game.has_key);
 		print_map(&game);
-
-		if (game.lives <= 0) {
-			cout << "Game Over!" << endl;
-			break;
-		}
-
-		move_player(&game);
+		print_message(message);
+		move_player(&game, finished, message);
 	}
 
 	return 0;
