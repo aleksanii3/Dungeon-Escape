@@ -26,7 +26,7 @@ struct Game {
 	int has_key;
 };
 
-bool compare_strings (const char *a, const char *b) {
+bool compare_strings(const char *a, const char *b) {
 	int i = 0;
 	while (true) {
 		if (a[i] != b[i]) {
@@ -41,9 +41,24 @@ bool compare_strings (const char *a, const char *b) {
 
 bool save_game(const Game *game) {
 	cout << "Saving..." << endl;
-	ofstream file("players.txt", std::ios::binary);
+	fstream file("players.txt", ios::binary | ios::in | ios::out);
 	if (!file.is_open()) {
-		return false;
+		file.open("players.txt", ios::binary | ios::in | ios::out | ios::trunc);
+	}
+
+	while (true) {
+		Game tmp_game;
+		file.read((char *) &tmp_game, sizeof(tmp_game));
+
+		if (file.eof()) {
+			file.clear();
+			break;
+		}
+
+		if (compare_strings(tmp_game.name, game->name)) {
+			file.seekp(file.tellg() - (streampos) sizeof(tmp_game));
+			break;
+		}
 	}
 
 	file.write((const char *) game, sizeof(*game));
@@ -60,9 +75,7 @@ bool load_game(Game *game) {
 	bool loaded = false;
 	Game loaded_game;
 	while (!file.eof()) {
-
-file.read
-((char *) &loaded_game, sizeof(loaded_game));
+		file.read((char *) &loaded_game, sizeof(loaded_game));
 		if (compare_strings(loaded_game.name, game->name)) {
 			loaded = true;
 			*game = loaded_game;
@@ -126,13 +139,12 @@ bool show_menu(Game *game) {
 		int choice;
 		cout << "> ";
 		cin >> choice;
-		if (
-cin.fail
-()) {
+		if (cin.fail()) {
 			cin.clear();
 			cin.ignore(10000, '\n');
 		}
 		else if (choice == 1) {
+			*game = {};
 			input_name(game);
 			if (load_game(game)) {
 				cout << "Player name already exists!" << endl;
@@ -140,6 +152,8 @@ cin.fail
 				break;
 			}
 			else {
+				game->lives = 3;
+				save_game(game);
 				cout << "Welcome, " << game->name << "!" << endl;
 				success = true;
 				break;
@@ -295,6 +309,7 @@ void move_player(Game *game, bool &finished, const char *&message) {
 				finished = true;
 			}
 			else {
+                message="test";
 				save_game(game);
 				load_map(game);
 				new_x = game->player_x;
@@ -316,9 +331,8 @@ void move_player(Game *game, bool &finished, const char *&message) {
 	game->player_y = new_y;
 }
 
-int main () {
+int main() {
 	Game game = {};
-	game.lives = 3;
 
 	if (!show_menu(&game)) {
 		return -1;
@@ -349,3 +363,4 @@ int main () {
 
 	return 0;
 }
+
